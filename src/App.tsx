@@ -353,7 +353,12 @@ function App() {
                 Base Commit
                 <span className="commit-sha">{leftCommit.sha.substring(0, 7)}</span>
               </h3>
-              <div className="commit-message">{leftCommit.message.split('\n')[0]}</div>
+              <div className="commit-message">
+                <div className="commit-title">{leftCommit.message.split('\n')[0]}</div>
+                {leftCommit.message.includes('\n') && (
+                  <pre className="commit-body">{leftCommit.message.split('\n').slice(1).join('\n').trim()}</pre>
+                )}
+              </div>
               <div className="commit-meta">
                 <div>Author: {leftCommit.author}</div>
                 <div>Date: {new Date(leftCommit.date).toLocaleString()}</div>
@@ -367,7 +372,12 @@ function App() {
                 Compare Commit
                 <span className="commit-sha">{rightCommit.sha.substring(0, 7)}</span>
               </h3>
-              <div className="commit-message">{rightCommit.message.split('\n')[0]}</div>
+              <div className="commit-message">
+                <div className="commit-title">{rightCommit.message.split('\n')[0]}</div>
+                {rightCommit.message.includes('\n') && (
+                  <pre className="commit-body">{rightCommit.message.split('\n').slice(1).join('\n').trim()}</pre>
+                )}
+              </div>
               <div className="commit-meta">
                 <div>Author: {rightCommit.author}</div>
                 <div>Date: {new Date(rightCommit.date).toLocaleString()}</div>
@@ -474,9 +484,8 @@ function App() {
                 </thead>
                 <tbody>
                   {comparison.results.map(result => {
-                    const scoreChange = result.rightScore - result.leftScore
-                    const rowClass = Math.abs(scoreChange) > SCORE_CHANGE_THRESHOLD 
-                      ? (scoreChange > 0 ? 'row-improved' : 'row-degraded')
+                    const rowClass = Math.abs(result.relativeChange) > NEUTRAL_CHANGE_THRESHOLD
+                      ? (result.relativeChange < 0 ? 'row-improved' : 'row-degraded')
                       : ''
                     
                     return (
