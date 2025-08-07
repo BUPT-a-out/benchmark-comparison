@@ -80,6 +80,48 @@ function App() {
     fetchData()
   }, [])
 
+  // 从URL参数获取commit hash
+  useEffect(() => {
+    if (!data) return
+    
+    const urlParams = new URLSearchParams(window.location.search)
+    const leftSha = urlParams.get('left')
+    const rightSha = urlParams.get('right')
+    
+    if (leftSha && !leftCommit) {
+      const commit = data.commits.find(c => c.sha.startsWith(leftSha))
+      if (commit) {
+        setLeftCommit(commit)
+      }
+    }
+    
+    if (rightSha && !rightCommit) {
+      const commit = data.commits.find(c => c.sha.startsWith(rightSha))
+      if (commit) {
+        setRightCommit(commit)
+      }
+    }
+  }, [data, leftCommit, rightCommit])
+
+  // 更新URL参数
+  const updateUrlParams = (left: CommitData | null, right: CommitData | null) => {
+    const url = new URL(window.location.href)
+    
+    if (left) {
+      url.searchParams.set('left', left.sha.substring(0, 7))
+    } else {
+      url.searchParams.delete('left')
+    }
+    
+    if (right) {
+      url.searchParams.set('right', right.sha.substring(0, 7))
+    } else {
+      url.searchParams.delete('right')
+    }
+    
+    window.history.replaceState({}, '', url.toString())
+  }
+
   const fetchData = async () => {
     try {
       const response = await axios.get('./data/benchmark_data.json')
@@ -274,7 +316,11 @@ function App() {
             classNamePrefix="react-select"
             options={leftOptions}
             value={leftCommit ? leftOptions.find(opt => opt.value.sha === leftCommit.sha) : null}
-            onChange={(option) => setLeftCommit(option?.value || null)}
+            onChange={(option) => {
+              const newLeft = option?.value || null
+              setLeftCommit(newLeft)
+              updateUrlParams(newLeft, rightCommit)
+            }}
             placeholder="Select base commit..."
             isClearable
             components={{ Option: CustomOption }}
@@ -287,7 +333,11 @@ function App() {
             classNamePrefix="react-select"
             options={rightOptions}
             value={rightCommit ? rightOptions.find(opt => opt.value.sha === rightCommit.sha) : null}
-            onChange={(option) => setRightCommit(option?.value || null)}
+            onChange={(option) => {
+              const newRight = option?.value || null
+              setRightCommit(newRight)
+              updateUrlParams(leftCommit, newRight)
+            }}
             placeholder="Select compare commit..."
             isClearable
             components={{ Option: CustomOption }}
